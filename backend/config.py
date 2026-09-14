@@ -1,5 +1,18 @@
 import os
+from pathlib import Path
 from dataclasses import dataclass
+
+try:
+    from dotenv import load_dotenv
+    # Load root .env file
+    root_dir = Path(__file__).resolve().parent.parent
+    env_file = root_dir / ".env"
+    if env_file.exists():
+        load_dotenv(dotenv_path=env_file)
+    else:
+        load_dotenv()
+except ImportError:
+    pass
 
 @dataclass
 class Config:
@@ -7,7 +20,7 @@ class Config:
     MYSQL_HOST: str = os.getenv("MYSQL_HOST", "mysql-32b82b88-emonk42065-ek.f.aivencloud.com")
     MYSQL_PORT: int = int(os.getenv("MYSQL_PORT", "19204"))
     MYSQL_USER: str = os.getenv("MYSQL_USER", "avnadmin")
-    MYSQL_PASSWORD: str = os.getenv("MYSQL_PASSWORD", "<redacted>")
+    MYSQL_PASSWORD: str = os.getenv("MYSQL_PASSWORD", "")
     MYSQL_DATABASE: str = os.getenv("MYSQL_DATABASE", "defaultdb")
     MYSQL_SSL_REQUIRED: bool = True
 
