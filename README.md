@@ -1,156 +1,116 @@
-# EcoSim AI: Intelligent Economic Society Simulator
+# CityPulse
 
-**Course:** Artificial Intelligence Lab, Dept. of Computer Science & Engineering  
-**Authors:** Sadika Binti Noor (01123300453) & Emon Rahman (0112330069)  
-**Live Repository:** [https://github.com/Emon0036/EcosimAi](https://github.com/Emon0036/EcosimAi)
+For a complete file-by-file explanation, calculations, event flow, and viva questions, see [VIVA_GUIDE.md](VIVA_GUIDE.md).
 
----
+CityPulse is a living city model that makes everyday economic life visible. Follow people as they move between home, work, markets, and learning spaces; inspect personal goals and financial buffers; then test how the neighbourhood responds to a change in prices, taxes, or support.
 
-## 🌟 Overview
+The app is designed to be read at a glance: the map shows movement, the city pulse shows distribution, and the people view keeps individual lives in focus.
 
-**EcoSim AI** is an AI-driven simulation platform modeling a virtual economic society. Rather than relying on static economic assumptions or simple games, EcoSim AI is a research tool for studying cause-and-effect relationships between policy shocks (such as food inflation, tax hikes, and welfare subsidies) and community-wide macroeconomic outcomes using autonomous AI agents.
+## What it includes
 
-Every citizen in the society maintains private financial conditions, living expenses, personal savings goals, and adaptive decision-making logic.
+- A responsive city map with homes, workplaces, markets, education, and moving residents.
+- A people explorer with search, pressure filtering, income, savings, goals, and profiles.
+- Live indicators for population, average income, financial pressure, inequality, and income distribution.
+- Scenario controls for food-price changes, tax changes, cash support, and new work matches.
+- A cyclone warning, landfall, and recovery scenario that changes weather visuals, travel speed, shelter routing, household risk, and emergency support.
+- A synthetic training set of 50,000 financial-life patterns for the distress model.
+- TiDB/MySQL persistence for the shared simulation, with an optional SQLite mode for isolated local testing.
+- CSV downloads for the people sample and the training patterns.
 
-```
-       [ User Injects Economic Shock ] (e.g. +30% Food Inflation, +10% Tax)
-                     │
-                     ▼
-           [ Environment Updates ]
-                     │
-                     ▼
-        [ Agents Analyze Situation ] ◄── Logistic Regression Risk Model P(Distress)
-                     │
-                     ▼
-         [ Agents Make Decisions ]  ◄── Cuts Discretionary Spend / Withdrew Savings / CSP Job Match
-                     │
-                     ▼
-      [ Macroeconomic Outcomes Generated ] ◄── Gini Coefficient, Poverty Headcount, 2D City A* Motion
-```
+## How the model works
 
----
+Each resident is a synthetic profile with a job, income, expenses, savings, dependants, a personal goal, and a place in the city. On each simulated day, residents make simple adaptive decisions and move through the neighbourhood. Environmental events add a clear, explainable layer: cyclone severity increases household pressure, redirects residents to the civic shelter, slows travel, and opens a recovery path.
 
-## 🧠 AI Core Techniques
+The model combines:
 
-| AI Technique | Role in EcoSim AI | Implementation File |
-| :--- | :--- | :--- |
-| **A\* Search** | Guides autonomous citizen navigation across the 2D virtual city grid between homes, workplaces, bazaar, banks, and schools avoiding obstacles. | [`backend/ai/astar.py`](file:///d:/Ai%20offline/Project/backend/ai/astar.py) & [`public/js/astar_client.js`](file:///d:/Ai%20offline/Project/public/js/astar_client.js) |
-| **Constraint Satisfaction (CSP)** | Solves labor market allocation matching unemployed citizens to job vacancies with MRV (Minimum Remaining Values), degree heuristic, and forward checking. | [`backend/ai/csp_solver.py`](file:///d:/Ai%20offline/Project/backend/ai/csp_solver.py) & [`public/js/csp_client.js`](file:///d:/Ai%20offline/Project/public/js/csp_client.js) |
-| **Logistic Regression (ML)** | Evaluates financial vulnerability and default risk for each citizen: $P(\text{distress}) = \frac{1}{1 + e^{-(W^TX + b)}}$ ($95.2\%$ accuracy, $0.985$ ROC-AUC). | [`backend/ai/risk_model.py`](file:///d:/Ai%20offline/Project/backend/ai/risk_model.py) & [`public/js/risk_client.js`](file:///d:/Ai%20offline/Project/public/js/risk_client.js) |
-| **Econometric Analytics** | Live calculation of Gini Inequality index via Lorenz curve numerical integration, poverty headcount, and quintile breakdowns. | [`backend/simulation/engine.py`](file:///d:/Ai%20offline/Project/backend/simulation/engine.py) |
+| Part | Purpose |
+| --- | --- |
+| A* pathfinding | Finds routes between city places while avoiding blocked tiles. |
+| Constraint matching | Connects people seeking work with suitable vacancies. |
+| Logistic regression | Estimates financial pressure from expenses, savings, debt, inflation, job stability, and dependants. |
+| City metrics | Calculates inequality, poverty, average income, savings, debt, and income fifths. |
 
----
+The current risk-model evaluation on a held-out test split is:
 
-## 📊 Datasets
+- Training patterns: **50,000**
+- Accuracy: **94.15%**
+- Precision: **85.05%**
+- Recall: **80.82%**
+- ROC-AUC: **0.983**
 
-The project provides realistic, urban-calibrated datasets (calibrated in Bangladeshi Taka **BDT**):
+These are evaluation results on generated data, not a guarantee about real-world outcomes. All people and events in the app are fictional simulation data.
 
-1. **`citizens.csv` (120 Virtual Citizens)**:
-   - Includes seed profile **Rohan Rahman** (Programmer, 30,000 BDT/mo, 5,000 BDT savings, Goal: "Buy a laptop", as specified in Slide 10).
-   - Contains fields: `id`, `name`, `age`, `gender`, `occupation`, `education`, `skills`, `monthly_income`, `essential_expenses`, `discretionary_expenses`, `savings`, `debt`, `dependents`, `goal`, `risk_score`, `is_distressed`.
-2. **`financial_risk_training.csv` (5,000 Historical Records)**:
-   - Multi-variate dataset simulating diverse shock conditions used to train the Scikit-Learn Logistic Regression model.
-   - Ground truth distress classifications based on debt ratios, buffer months, and inflation pass-through.
+## Run locally
 
----
+### 1. Install dependencies
 
-## 🗄️ Database Architecture
-
-EcoSim AI supports dual-tier persistence:
-- **Primary:** **Aiven Cloud MySQL** with SSL (`mysql-32b82b88-emonk42065-ek.f.aivencloud.com:19204`, DB: `defaultdb`).
-- **Resilient Fallback:** **Local SQLite** database (`ecosim_local.db`), ensuring zero downtime if internet access is interrupted.
-- Credentials and hostnames are managed via `.env` or system environment variables.
-
----
-
-## 🚀 Quick Start (Running Locally)
-
-### 1. Clone & Install Dependencies
 ```bash
-git clone https://github.com/Emon0036/EcosimAi.git
-cd EcosimAi
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment (Optional)
-Create or edit `.env`:
-```env
-MYSQL_HOST=mysql-32b82b88-emonk42065-ek.f.aivencloud.com
-MYSQL_PORT=19204
-MYSQL_USER=avnadmin
-MYSQL_PASSWORD=your_password
-MYSQL_DATABASE=defaultdb
-```
+### 2. Start the app
 
-### 3. Run the Application
 ```bash
 python app.py
 ```
-Open your browser at: **`http://127.0.0.1:8000`**
 
----
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000). CityPulse uses this single local port for the latest neighbourhood view.
 
-## ☁️ Deploying to Vercel
+Do not open `0.0.0.0` in the browser, and do not start a second server instance while one is already running.
 
-The project includes built-in Vercel configuration (`vercel.json` and `api/index.py`).
+### 3. Database configuration
 
-1. Ensure the code is pushed to your GitHub repository: `https://github.com/Emon0036/EcosimAi`
-2. Go to [Vercel Dashboard](https://vercel.com/new) -> **Import Git Repository**.
-3. Select `EcosimAi`.
-4. (Optional) Add Environment Variables:
-   - `MYSQL_HOST`
-   - `MYSQL_USER`
-   - `MYSQL_PASSWORD`
-   - `MYSQL_PORT`
-   - `MYSQL_DATABASE`
-5. Click **Deploy**!
+Copy `.env.example` to `.env` and provide TiDB credentials. A new shared city loads 50 citizens from TiDB in agent ID order, and its complete state is saved in TiDB. TiDB is required by default; `REQUIRE_MYSQL=false` permits SQLite fallback for local tests only. Vercel always requires TiDB/MySQL. The model weights, market configuration and downloadable CSV datasets remain packaged project files.
 
----
+## Refresh the generated data
 
-## 🏛️ Project Directory Structure
+The checked-in training file already contains 50,000 rows. To regenerate the synthetic data and model weights:
 
-```text
-EcosimAi/
-├── app.py                      # Main entrypoint runner
-├── vercel.json                 # Vercel serverless deployment config
-├── requirements.txt            # Python dependencies
-├── .env.example                # Example environment variables
-├── api/
-│   └── index.py                # Vercel serverless API bridge
-├── backend/
-│   ├── app.py                  # FastAPI REST endpoints & static server
-│   ├── config.py               # Database and simulation configuration
-│   ├── ai/
-│   │   ├── astar.py            # A* Search pathfinding on 2D grid
-│   │   ├── csp_solver.py       # CSP Solver for job & resource allocation
-│   │   └── risk_model.py       # Logistic Regression ML model (Scikit-Learn)
-│   ├── data/
-│   │   ├── dataset_generator.py # Synthesizes calibrated demographics & ML data
-│   │   ├── citizens.csv        # Seed population dataset
-│   │   ├── financial_risk_training.csv # ML training data (5,000 samples)
-│   │   └── market_config.json  # Commodity price baskets & job templates
-│   ├── database/
-│   │   └── db.py               # Aiven MySQL + SQLite manager
-│   └── simulation/
-│       ├── agent.py            # Autonomous citizen agent logic & memory
-│       ├── city.py             # 2D City grid representation & 6 hubs
-│       └── engine.py           # Simulation cycle & macro metrics
-└── public/
-    ├── index.html              # Modern dark-mode interface
-    ├── css/
-    │   └── styles.css          # Glassmorphism design system
-    └── js/
-        ├── config.js           # Client parameters & city hubs
-        ├── astar_client.js     # Client-side 60 FPS A* pathfinding
-        ├── risk_client.js      # Client-side Logistic Regression evaluator
-        ├── csp_client.js       # CSP labor allocator visualizer
-        ├── city_canvas.js      # 2D Canvas rendering engine
-        ├── charts.js           # Live Gini & Quintile charts
-        └── app.js              # Application coordinator
+```bash
+python -m backend.data.dataset_generator
 ```
 
----
+This refreshes:
 
-## 🎓 Academic Contribution
+- `backend/data/citizens.csv` — the 50-person live city sample.
+- `backend/data/financial_risk_training.csv` — 50,000 generated training patterns.
+- `backend/data/risk_model_weights.json` — the latest fitted model weights and evaluation metrics.
 
-This simulator demonstrates how fundamental computer science and artificial intelligence techniques—**heuristic graph search (A\*)**, **constraint networks (CSP)**, and **supervised machine learning (Logistic Regression)**—can be combined with agent-based microeconomics to replace guesswork with quantitative, verifiable simulation models.
+## Project layout
+
+```text
+.
+├── app.py                         # Local server entry point
+├── api/index.py                   # Deployment adapter
+├── backend/
+│   ├── app.py                     # FastAPI routes and static file server
+│   ├── ai/                        # Pathfinding, matching, and risk model
+│   ├── data/                      # Synthetic data and generated model files
+│   ├── database/                  # SQLite/MySQL persistence
+│   └── simulation/                # Residents, city, and simulation engine
+└── public/
+    ├── index.html                 # CityPulse interface
+    ├── css/styles.css              # Visual system and responsive layout
+    └── js/                        # Map, charts, controls, and API clients
+```
+
+## API highlights
+
+- `GET /api/state` — current day, city state, metrics, and recent history.
+- `POST /api/step` — advance the simulation one 15-minute tick.
+- `POST /api/event` — inject a scenario event.
+- `GET /api/agents` — search and filter residents.
+- `GET /api/agents/{id}` — open a resident profile.
+- `POST /api/csp-match` — find new work matches.
+- `GET /api/dataset/download/citizens` — download the live sample.
+- `GET /api/dataset/download/training` — download the 50,000-row training set.
+
+## Data note
+
+CityPulse uses generated, privacy-safe profiles calibrated for an urban Bangladesh context. It does not contain records about real people. The calibration references are kept in [`backend/data/bangladesh_data_sources.json`](backend/data/bangladesh_data_sources.json).
+
+## Decision Engine
+
+EcoSim uses a lightweight rule-based Decision Engine to choose each agent's next activity. The normal time-based routine remains the default, while urgent conditions override it in this order: cyclone safety, recovery, critical financial pressure, job search, debt support, food need, and normal routine.
+
+The Decision Engine only answers "What should the agent do?". Logistic Regression measures financial risk, CSP selects a suitable job, and A* calculates the route. Each decision is returned in the agent API state with an activity, destination, reason code, priority, needs, and a human-readable reason.

@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from typing import List, Dict, Any
 
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # Ensure repeatable realism with deterministic seed option
 random.seed(42)
 np.random.seed(42)
@@ -43,8 +45,11 @@ GOALS = [
     "Buy a motorbike"
 ]
 
-def generate_citizens_dataset(n_agents: int = 120, output_path: str = "backend/data/citizens.csv") -> pd.DataFrame:
+def generate_citizens_dataset(n_agents: int = 50, output_path: str = None) -> pd.DataFrame:
     citizens = []
+    
+    if output_path is None:
+        output_path = os.path.join(_BASE_DIR, "backend/data/citizens.csv")
     
     # 1. Guarantee Seed Profile from Slide 10: Rohan (Programmer, 30,000 BDT/mo, 5,000 BDT savings, Goal: Buy a laptop)
     rohan = {
@@ -204,11 +209,14 @@ def generate_citizens_dataset(n_agents: int = 120, output_path: str = "backend/d
     print(f"[Dataset Generator] Generated {len(df)} realistic citizens saved to {output_path}")
     return df
 
-def generate_risk_training_dataset(n_samples: int = 5000, output_path: str = "backend/data/financial_risk_training.csv") -> pd.DataFrame:
+def generate_risk_training_dataset(n_samples: int = 50000, output_path: str = None) -> pd.DataFrame:
     """
     Generates a realistic historical dataset for training the Logistic Regression Risk Predictor.
     Simulates various economic shock conditions (food price spikes, inflation, layoff events).
     """
+    if output_path is None:
+        output_path = os.path.join(_BASE_DIR, "backend/data/financial_risk_training.csv")
+    
     records = []
     
     for _ in range(n_samples):
@@ -279,5 +287,5 @@ def generate_risk_training_dataset(n_samples: int = 5000, output_path: str = "ba
     return df
 
 if __name__ == "__main__":
-    generate_citizens_dataset(120)
-    generate_risk_training_dataset(5000)
+    generate_citizens_dataset(50)
+    generate_risk_training_dataset(50000)

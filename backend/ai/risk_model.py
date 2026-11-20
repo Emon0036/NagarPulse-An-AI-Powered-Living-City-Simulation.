@@ -8,8 +8,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
 
-MODEL_WEIGHTS_FILE = "backend/data/risk_model_weights.json"
-TRAINING_DATA_FILE = "backend/data/financial_risk_training.csv"
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+MODEL_WEIGHTS_FILE = os.path.join(_BASE_DIR, "backend/data/risk_model_weights.json")
+TRAINING_DATA_FILE = os.path.join(_BASE_DIR, "backend/data/financial_risk_training.csv")
 
 FEATURE_NAMES = [
     "essential_to_income_ratio",
@@ -126,12 +127,18 @@ class FinancialRiskModel:
 
         food_shock = float(macro_state.get("food_shock_pct", 0.0))
         inflation = float(macro_state.get("inflation_rate", 0.05))
+        tax_rate = float(macro_state.get("tax_rate", 0.10))
+        environment = macro_state.get("environment", {}) or {}
+        cyclone_severity = float(environment.get("severity", 0.0)) if environment.get("stage", "normal") != "normal" else 0.0
+        # Risk is based on disposable income: a high tax rate leaves less money
+        # for essentials, debt payments, and dependants.
+        take_home_income = max(income * (1.0 - min(max(tax_rate, 0.0), 0.80)), 100.0)
 
         # Dynamically inflate essential expenses with shock
-        shocked_essential = essential_exp * (1.0 + food_shock * 0.65)
-        essential_ratio = shocked_essential / income
+        shocked_essential = essential_exp * (1.0 + food_shock * 0.65 + cyclone_severity * 0.20)
+        essential_ratio = shocked_essential / take_home_income
         savings_ratio = savings / max(shocked_essential, 100.0)
-        debt_ratio = debt / income
+        debt_ratio = debt / take_home_income
 
         raw_features = [
             essential_ratio,
@@ -145,9 +152,16 @@ class FinancialRiskModel:
 
         if not self.is_trained or not self.scaler_mean:
             # Fallback heuristic
-            z = -2.0 + 3.0 * essential_ratio - 1.2 * min(savings_ratio, 5.0) + 1.5 * debt_ratio + 2.0 * food_shock
+            z = -2.0 + 3.0 * essential_ratio - 1.2 * min(savings_ratio, 5.0) + 1.5 * debt_ratio + 2.0 * food_shock + 1.2 * cyclone_severity
             prob = 1.0 / (1.0 + np.exp(-z))
-            return {"risk_score": round(float(prob), 3), "is_distressed": prob >= 0.50, "drivers": []}
+            drivers = []
+            if food_shock >= 0.15:
+                drivers.append(f"Food Price Shock (+{food_shock*100:.0f}%)")
+            if tax_rate >= 0.15:
+                drivers.append(f"High Tax Burden ({tax_rate*100:.0f}% of income)")
+            if cyclone_severity >= 0.20:
+                drivers.append(f"Cyclone Exposure ({cyclone_severity*100:.0f}% severity)")
+            return {"risk_score": round(float(prob), 3), "is_distressed": prob >= 0.50, "drivers": drivers}
 
         # Normalize features
         scaled_features = [
@@ -165,7 +179,7 @@ class FinancialRiskModel:
             contributions.append((feat, contrib, raw_features[FEATURE_NAMES.index(feat)]))
 
         prob = 1.0 / (1.0 + np.exp(-z))
-        prob = float(np.clip(prob, 0.01, 0.99))
+        prob = float(np.clip(prob + cyclone_severity * 0.08, 0.01, 0.99))
 
         # Rank drivers
         contributions.sort(key=lambda item: item[1], reverse=True)
@@ -183,10 +197,22 @@ class FinancialRiskModel:
                 }
                 top_drivers.append(label_map.get(feat, feat))
 
+        if tax_rate >= 0.15 and prob >= 0.35:
+            tax_driver = f"High Tax Burden ({tax_rate*100:.0f}% of income)"
+            if tax_driver not in top_drivers:
+                top_drivers.insert(0, tax_driver)
+                top_drivers = top_drivers[:3]
+
+        if cyclone_severity >= 0.20 and prob >= 0.35:
+            cyclone_driver = f"Cyclone Exposure ({cyclone_severity*100:.0f}% severity)"
+            if cyclone_driver not in top_drivers:
+                top_drivers.insert(0, cyclone_driver)
+                top_drivers = top_drivers[:3]
+
         return {
             "risk_score": round(prob, 3),
             "is_distressed": prob >= 0.50,
-            "top_drivers": top_drivers
+            "drivers": top_drivers
         }
 
 risk_model = FinancialRiskModel()

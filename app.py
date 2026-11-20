@@ -1,27 +1,17 @@
 """
-EcoSim AI - Main Entry Point
+CityPulse local entry point.
 Run: python app.py
-Optional: python app.py --port 8001
+Open: http://127.0.0.1:8000/
 """
-import sys
 import uvicorn
 from backend.app import app
 
-def get_port():
-    port = 8000
-    if "--port" in sys.argv:
-        try:
-            idx = sys.argv.index("--port")
-            port = int(sys.argv[idx + 1])
-        except Exception:
-            pass
-    return port
+LOCAL_HOST = "127.0.0.1"
+LOCAL_PORT = 8000
 
 if __name__ == "__main__":
-    port = get_port()
     print("=" * 65)
-    print("  EcoSim AI - Intelligent Economic Society Simulator")
-    print("  Dept. of Computer Science & Engineering - AI Lab")
-    print(f"  Server running on http://127.0.0.1:{port}")
+    print("  CityPulse - Living City Model")
+    print(f"  Server running on http://{LOCAL_HOST}:{LOCAL_PORT}")
     print("=" * 65)
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host=LOCAL_HOST, port=LOCAL_PORT)

@@ -17,18 +17,19 @@ except ImportError:
 @dataclass
 class Config:
     # Aiven MySQL Cloud Server configuration
-    MYSQL_HOST: str = os.getenv("MYSQL_HOST", "mysql-32b82b88-emonk42065-ek.f.aivencloud.com")
-    MYSQL_PORT: int = int(os.getenv("MYSQL_PORT", "19204"))
-    MYSQL_USER: str = os.getenv("MYSQL_USER", "avnadmin")
+    MYSQL_HOST: str = os.getenv("MYSQL_HOST", "")
+    MYSQL_PORT: int = int(os.getenv("MYSQL_PORT", "4000"))
+    MYSQL_USER: str = os.getenv("MYSQL_USER", "")
     MYSQL_PASSWORD: str = os.getenv("MYSQL_PASSWORD", "")
-    MYSQL_DATABASE: str = os.getenv("MYSQL_DATABASE", "defaultdb")
+    MYSQL_DATABASE: str = os.getenv("MYSQL_DATABASE", "")
     MYSQL_SSL_REQUIRED: bool = True
+    REQUIRE_MYSQL: bool = os.getenv("REQUIRE_MYSQL", "true").lower() in ("1", "true", "yes") or bool(os.getenv("VERCEL"))
 
     # Local fallback SQLite database
     SQLITE_PATH: str = os.getenv("SQLITE_PATH", "ecosim_local.db")
 
     # Simulation defaults
-    DEFAULT_AGENT_COUNT: int = 120
+    DEFAULT_AGENT_COUNT: int = 50
     DEFAULT_FOOD_PRICE_INDEX: float = 1.0
     DEFAULT_TAX_RATE: float = 0.10
     DEFAULT_INFLATION_RATE: float = 0.05
