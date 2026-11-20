@@ -10,6 +10,7 @@ class DatabaseHealthTests(unittest.TestCase):
     def test_mysql_uses_bundled_ca_and_verifies_server_identity(self):
         with patch("mysql.connector.connect") as connect:
             db_manager.get_mysql_connection()
+        self.assertTrue(connect.call_args.kwargs["use_pure"])
         self.assertEqual(connect.call_args.kwargs["ssl_ca"], certifi.where())
         self.assertTrue(connect.call_args.kwargs["ssl_verify_cert"])
         self.assertTrue(connect.call_args.kwargs["ssl_verify_identity"])

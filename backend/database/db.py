@@ -33,6 +33,7 @@ class DatabaseManager:
                 user=config.MYSQL_USER,
                 password=config.MYSQL_PASSWORD,
                 database=config.MYSQL_DATABASE,
+                use_pure=True,
                 ssl_disabled=False,
                 ssl_ca=certifi.where(),
                 ssl_verify_cert=True,
