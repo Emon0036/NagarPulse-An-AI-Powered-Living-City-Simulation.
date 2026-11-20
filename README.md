@@ -1,4 +1,4 @@
-# CityPulse
+# NagarPulse: An AI-Powered Living City Simulation
 
 For a complete file-by-file explanation, calculations, event flow, and viva questions, see [VIVA_GUIDE.md](VIVA_GUIDE.md).
 
